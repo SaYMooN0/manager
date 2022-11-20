@@ -135,9 +135,8 @@ namespace ConsoleApp1
                 }
                 public void bankrot(List<Player> players, List<Player> plrsBySen)
                 {
-
                     Console.WriteLine($"\n|-------------------------------------------------------------|");
-                    Console.WriteLine($"   ): Игрок под номером {id} объявляется банкротом и выбывает :( ");
+                    Console.WriteLine($"   ): Игрок под номером {id+1} объявляется банкротом и выбывает :( ");
                     Console.WriteLine($"|-------------------------------------------------------------|\n");
                     players.RemoveAt(id);
                     for (int i = 0; i < plrsBySen.Count; i++)
@@ -147,13 +146,12 @@ namespace ConsoleApp1
                             plrsBySen.RemoveAt(i);
                             return;
                         }
-
                     }
                 }
                 public void show()
                 {
                     line();
-                    Console.WriteLine($"|  Иденфикационный номер игрока: {id}\n" +
+                    Console.WriteLine($"|  Иденфикационный номер игрока: {id + 1}\n" +
                                       $"|  Баланс игрока: {balance} $\n" +
                                       $"|  ЕСМ игрока: {ESM}\n" +
                                       $"|  ЕГП игрока: {EGP}\n" +
@@ -171,32 +169,33 @@ namespace ConsoleApp1
                     Console.WriteLine($"|  Максимально количество ЕСМ, которое банк может продать: {max}.");
                     Console.WriteLine("|  Введите предлагаемую вами цену на ЕСМ\n|  (ввод цены меньше, предлогаемой банком, или больше, чем есть у вас на балансе, будет считаться за отказ).");
                     line();
-                    int price = Int32.Parse(Console.ReadLine());
-                    int count;
-                    if (price < min || price > balance)
+                    int price;
+                    string str = Console.ReadLine();
+                    bool t = Int32.TryParse(str, out price);
+                    if (t && price > min && price < balance)
                     {
-                        Console.WriteLine("\tВы отказались от участия.");
-                        confirm();
-                        return;
-                    }
-                    Console.WriteLine("Введите количество ЕСМ, которое хотели бы приобрести :");
-                    while (true)
-                    {
-                        count = Int32.Parse(Console.ReadLine());
-                        if (count > max || count < 0)
+                        int count;
+                        Console.WriteLine("Введите количество ЕСМ, которое хотели бы приобрести :");
+                        while (true)
                         {
-                            Console.WriteLine("\tВы ввели некорректное число!");
+                            count = Int32.Parse(Console.ReadLine());
+                            if (count > max || count < 0)
+                                Console.WriteLine("\tВы ввели некорректное число!");
+                            else
+                                break;
                         }
-                        else
-                            break;
+                        if (count * price > balance)
+                        {
+                            Console.WriteLine($"\tВы хотите приобрести ЕСМ на сумму {count * price}, что больше вашего баланса ({balance}), следовательно, вы отказываетесь от участия.");
+                            return;
+                        }
+                        bank.req4Mat(count, price, id);
                     }
-                    if (count * price > balance)
+                    else
                     {
-                        Console.WriteLine($"\tВы хотите приобрести ЕСМ на сумму {count*price}, что больше вашего баланса ({balance}), следовательно, вы отказываетесь от участия.");
+                        Console.WriteLine("\tВы отказались от участия.\n");
                         return;
                     }
-                    bank.req4Mat(count, price,id);
-
                 }
                 public void EGPsell(Bank bank, List<Player> players)
                 {
@@ -213,13 +212,12 @@ namespace ConsoleApp1
                     Console.WriteLine($"|  Максимальное количество ЕГП, которое банк может купить: {max4sell}.");
                     Console.WriteLine( "|  Введите предлагаемую вами цену на ЕГП\n|  (ввод цены выше, предлогаемой банком, или нуля будет считаться за отказ).");
                     line();
-                    int price = Int32.Parse(Console.ReadLine());
+                    int price;
+                    bool t= Int32.TryParse(Console.ReadLine(), out price);
                     int count;
-                    if (price > max_price|| price==0)
+                    if (!t||price > max_price|| price==0)
                     {
                         Console.WriteLine("\tВы отказались от участия.");
-                        
-                        
                         return;
                     }
                     Console.WriteLine("Введите количество ЕГП, которое хотели бы продать: ");
@@ -282,75 +280,80 @@ namespace ConsoleApp1
                 public void take_loan(int step)
                 {
                     Console.WriteLine("Введите 1 если вы хотите взять ссуду или любое другое число если не хотите: ");
-                    int choice = 3;
-                    choice =Int32.Parse(Console.ReadLine());
-                    if (choice == 1)
+                    int choice;
+                    string str = Console.ReadLine();
+                    bool t = Int32.TryParse(str, out choice);
+                    if (t)
                     {
-                        int max_loan = (fabrics + autfabrics * 2) * 5000;
-                        int loan = 0;
-                        for (int i = 0; i < loans.Count; i++)
+                        if (choice == 1)
                         {
-                            loan += loans[i][0];
-                        }
-                        if (max_loan - loan > max_loan / 2)
-                        {
-                            Console.WriteLine("Выберите какую фабрику хотите заложить: ");
-                            if (any_Fabrics())
-                                Console.WriteLine("1) Обычную фабрику (получите на свой счет 5000)");
-                            if (any_AutomatedFabrics())
-                                Console.WriteLine("2) Автоматизированную фабрику (получите на свой счет 10000)");
-
-                            int[] l = new int[3];
-                            while (choice != 1 || choice != 2)
+                            int max_loan = (fabrics + autfabrics * 2) * 5000;
+                            int loan = 0;
+                            for (int i = 0; i < loans.Count; i++)
+                                loan += loans[i][0];
+                            if (max_loan - loan > max_loan / 2)
                             {
-                                choice = Int32.Parse(Console.ReadLine());
-                                if (choice == 1)
+                                Console.WriteLine("Выберите какую фабрику хотите заложить: ");
+                                if (any_Fabrics())
+                                    Console.WriteLine("1) Обычную фабрику (получите на свой счет 5000) (Введите 1)");
+                                if (any_AutomatedFabrics())
+                                    Console.WriteLine("2) Автоматизированную фабрику (получите на свой счет 10000) (Введите 2)");
+                                Console.WriteLine("Если вы передумали брать ссуду, введите что-либо другое");
+                                int[] l = new int[3];
+                                str = Console.ReadLine();
+                                t = Int32.TryParse(str, out choice);
+                                choice = Int32.Parse(str);
+                                if ( t==true&&(choice == 1 || choice == 2))
                                 {
-                                    if (findFab() != 10)
+                                    if (choice == 1)
                                     {
-                                        balance += 5000;
-                                        l[0] = 5000;
-                                        l[1] = step + 12;
-                                        l[2] = 1;
-                                        all_fabs.RemoveAt(findFab());
-                                        break;
+                                        if (findFab() != 10)
+                                        {
+                                            balance += 5000;
+                                            l[0] = 5000;
+                                            l[1] = step + 12;
+                                            l[2] = 1;
+                                            all_fabs.RemoveAt(findFab());
+                                            Console.WriteLine("Вы заложили одну обычную фабрику и получили 5000 на баланс");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine($"Мы не нашли у вас обычных фабрик :\\\n");
+                                            return;
+                                        }
                                     }
-                                    else
+                                    else if (choice == 2)
                                     {
-                                        Console.WriteLine($"Мы не нашли у вас обычных фабрик :\\\n");
-                                        confirm();
-                                        return;
+                                        if (findAutFab() != 10)
+                                        {
+                                            balance += 10000;
+                                            l[0] = 10000;
+                                            l[1] = step + 12;
+                                            l[2] = 2;
+                                            all_fabs.RemoveAt(findAutFab());
+                                            Console.WriteLine("Вы заложили одну автоматизированную фабрику и получили 10000 на баланс");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine($"Мы не нашли у вас автоматизированных фабрик :\\\n");
+                                            return;
+                                        }
                                     }
                                 }
-                                else if (choice == 2)
-                                {
-                                    if (findAutFab() != 10)
-                                    {
-                                        balance += 10000;
-                                        l[0] = 10000;
-                                        l[1] = step + 12;
-                                        l[2] = 2;
-                                        all_fabs.RemoveAt(findAutFab());
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine($"Мы не нашли у вас автоматизированных фабрик :\\\n");
-                                        confirm();
-                                        return;
-                                    }
-                                }
+                                else { Console.WriteLine("Вы отказались"); return; }
+                                loans.Add(l);
                             }
-                            loans.Add(l);
-
+                            else
+                            {
+                                Console.WriteLine("Вы не можете взять ссуду!");
+                                return;
+                            }
                         }
-                        else
-                        {
-                            Console.WriteLine("Вы не можете взять ссуду!");
-                            return;
-                        }
+                        else return;
                     }
-                    else return;
+                    else 
+                    { Console.WriteLine("Вы отказались");
+                        return;}
                 }
                 public void loans_check(int step)
                 {
@@ -425,40 +428,47 @@ namespace ConsoleApp1
                 }
                 public void produce()
                 {
-                    Console.WriteLine($"У вас сейчас {ESM} ЕСМ и {EGP} ЕГП.\n");
-                    Console.WriteLine($"Если у вас есть желание произвести ЕГП, введите 1.\n");
-                    Console.WriteLine($"Если вы не хотите ничего производить, введите любое другое число.\n");
-                    int choice = Int32.Parse(Console.ReadLine());
-                    int inESM = 0;
-                    if (choice == 1)
+                    line();
+                    Console.WriteLine($"|У вас сейчас {ESM} ЕСМ и {EGP} ЕГП.");
+                    Console.WriteLine($"|Если у вас есть желание произвести ЕГП, введите 1.");
+                    Console.WriteLine($"|Если вы не хотите ничего производить, введите любое другое число.");
+                    string str = Console.ReadLine();
+                    int choice;
+                    bool t = Int32.TryParse(str, out choice);
+                    if (t)
                     {
-                        Console.WriteLine($"Благодаря вашим фабрикам вы можете переработать {max_EGP()} ЕСМ.");
-                        while (true)
+                        if (choice == 1)
                         {
-                            Console.WriteLine($"Введите сколько ЕГП вы хотите произвести:");
-                            inESM = Int32.Parse(Console.ReadLine());
-                            if (inESM >ESM)
+                            int inESM = 0;
+                            Console.WriteLine($"Благодаря вашим фабрикам вы можете переработать {max_EGP()} ЕСМ.");
+                            while (true)
                             {
-                                Console.WriteLine("У вас недостаточно ЕСМ для переработки!");
-                            }
-                            else if (inESM > max_EGP())
-                            {
-                                Console.WriteLine("У вас недостаточно фабрик для переработки!");
-                            }
-                            else if (minProdPrice(inESM) > balance)
-                            {
-                                Console.WriteLine("У вас недостаточно денег для переработки!");
-                            }
-                            else
-                            {
-                                balance -= minProdPrice(inESM);
-                                ESM -= inESM;
-                                EGP += inESM;
-                                Console.WriteLine($"После переработки у игрока {id} имеется {ESM} ЕСМ и {EGP} ЕГП.");
-                                break;
+                                Console.WriteLine($"Введите сколько ЕГП вы хотите произвести:");
+                                str = Console.ReadLine();
+                                t = Int32.TryParse(str,out inESM);
+                                if (t)
+                                {
+                                    if (inESM > ESM)
+                                        Console.WriteLine("У вас недостаточно ЕСМ для переработки!");
+                                    else if (inESM > max_EGP())
+                                        Console.WriteLine("У вас недостаточно фабрик для переработки!");
+                                    else if (minProdPrice(inESM) > balance)
+                                        Console.WriteLine("У вас недостаточно денег для переработки!");
+                                    else
+                                    {
+                                        balance -= minProdPrice(inESM);
+                                        ESM -= inESM;
+                                        EGP += inESM;
+                                        Console.WriteLine($"После переработки у игрока {id+1} имеется {ESM} ЕСМ и {EGP} ЕГП, а его баланс составляет {balance}");
+                                        break;
+                                    }
+                                }
+                                else Console.WriteLine("Введены неверные данные");
                             }
                         }
+                        else  Console.WriteLine("Вы отказались");
                     }
+                    else Console.WriteLine("Вы отказались");
                 }
                 public void building(int step)
                 {
@@ -468,10 +478,11 @@ namespace ConsoleApp1
                         Console.WriteLine($"Если у вас есть желание постороить фабрику, введите 1.");
                         Console.WriteLine($"Если у вас есть желание постороить автоматизированную фабрику, введите 2.");
                         Console.WriteLine($"Если вы не хотите что-то строить, введите любое другое число.");
-                        int choice = Int32.Parse(Console.ReadLine());
-                        if (choice == 1)
+                        int choice;
+                        bool t = Int32.TryParse(Console.ReadLine(), out choice);
+                        if (t&&choice == 1)
                             buildUsual(step);
-                        else if (choice == 2)
+                        else if (t&&choice == 2)
                             buildAutomated(step);
                     }
                     else if (all_fabs.Count() == 6 && balance > 7000 && any_Fabrics())
@@ -480,7 +491,8 @@ namespace ConsoleApp1
                         Console.WriteLine($"Если у вас есть желание улучшить фабрику, введите 1");
                         Console.WriteLine($"Если у вас нет такого желания, введите любое друго число");
                         int choice = Int32.Parse(Console.ReadLine());
-                        if (choice == 1)
+                        bool t = Int32.TryParse(Console.ReadLine(), out choice);
+                        if (t&&choice == 1)
                             upgrade(step);
                     }
                 }
@@ -589,11 +601,6 @@ namespace ConsoleApp1
                     int min;
                     while(requestProd.Count >= 3&&count>=1)
                     {
-                        Console.WriteLine("Spisok zayavok na producty");
-                        foreach (var item in requestProd)
-                        {
-                            Console.WriteLine(item);
-                        }
                         min = 1;
                         for (int j = 1; j < requestProd.Count; j += 3)
                         {
@@ -653,12 +660,12 @@ namespace ConsoleApp1
                     }
                 }
                 Console.Clear();
-                Console.WriteLine($"\t\t _-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-____-___-___-___-___-___-___-___-___-___-___-___-___-___-___-___-_");
-                Console.WriteLine($"\t\t|                                                                                                                                                    |");
-                Console.WriteLine($"\t\t|================ Победителем объявляется игрок с индефикационным номером {id}! Этот игрок набрал {max_bal} баллов по окончанию игры ================|");//krasivo
-                Console.WriteLine($"\t\t|                                                               Поздравялем!!!                                                                       |");
-                Console.WriteLine($"\t\t -_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_---_--");
-
+                Console.WriteLine($"|--------------------------------------------------------------------------------------------------------------------|");
+                Console.WriteLine($"|                                                                                                                    |");
+                Console.WriteLine($"|    Победителем объявляется игрок с индефикационным номером {id}! Этот игрок набрал {max_bal} баллов по окончанию игры     |");
+                Console.WriteLine($"|                                                   Поздравялем!!!                                                   |");
+                Console.WriteLine($"|                                                                                                                    |");
+                Console.WriteLine($"|--------------------------------------------------------------------------------------------------------------------|");  
             }
             public List<Player> playersBySeniority(List<Player> players, ref int mainPlrID)
             {
@@ -698,9 +705,12 @@ namespace ConsoleApp1
             {
                 bank.requestMat.Clear();
                 bank.requestProd.Clear();
+                if (step != 0) 
+                bank.new_level_recieve();
                 for (int i = 0; i < plrsBySen.Count(); i++)
                 {
-                    Console.WriteLine($"\nСейчас месяц под номером {step+1}.\n");
+                    Console.WriteLine($"\n\t\t\tСейчас месяц под номером {step+1}.");
+                    Console.WriteLine($"\t\t\tУровень банка в этом месяце {bank.lvl}.\n");
                     plrsBySen[i].fabric_count();
                     plrsBySen[i].loan_tax();
                     plrsBySen[i].loans_check(step);
@@ -708,11 +718,11 @@ namespace ConsoleApp1
                     {
                         fab.build(plrsBySen[i],step);
                     }
-                    if (i < players.Count())
+                    if (i <= players.Count())
                     {
                         line();
-                        Console.WriteLine($"|  Баланс игрока {plrsBySen[i].id} до уплаты налогов: {plrsBySen[i].balance}.");
-                        Console.WriteLine($"|  Ежемесячные издержки игрока под номером {plrsBySen[i].id} составил: {plrsBySen[i].payTaxes()}.");
+                        Console.WriteLine($"|  Баланс игрока {plrsBySen[i].id+1} до уплаты налогов: {plrsBySen[i].balance}.");
+                        Console.WriteLine($"|  Ежемесячные издержки игрока под номером {plrsBySen[i].id + 1} составил: {plrsBySen[i].payTaxes()}.");
                         line();
                         if (plrsBySen[i].balance <= 0)
                         {
@@ -720,7 +730,7 @@ namespace ConsoleApp1
                         }
                         else
                         {
-                            plrsBySen[i].show();
+                           plrsBySen[i].show();
                            plrsBySen[i].take_loan(step);
                            plrsBySen[i].request4M(bank, players);
                             if (plrsBySen[i].balance > 2000 && plrsBySen[i].ESM >= 1)
@@ -734,8 +744,8 @@ namespace ConsoleApp1
                     else
                     {
                         winner(players,bank);
-                    } 
-                    confirm();
+                        return;
+                    }
                 }
                 bank.giveOut(players);
                 bank.EGPbuy(players);
@@ -814,10 +824,8 @@ namespace ConsoleApp1
                                   "|  ||  \\\\  //  ||      ||           ||     ||     ||           //    \\\\        \\\\       ||        ||======  |\n" +
                                   "|  ||   \\\\//   ||      ||           ||     ||     ||         ============     //\\\\      ||        ||\t    |\n" +
                                   "|  ||    ||    ||      ||=====      ||     ||     ||=====     ||      ||     //||\\\\     ||=====   ||\t    |");
-                Console.WriteLine("|___________________________________________________________________________________________________________|");
-                Console.WriteLine();
-                Console.WriteLine("\t\t\t\t\t\t> Играть\n" +
-                                  "\t\t\t\t\t\t  Выйти");
+                Console.WriteLine("|___________________________________________________________________________________________________________|\n");
+                Console.WriteLine("\t\t\t\t\t\t-> Играть\n" +"\t\t\t\t\t\t  Выйти");
                 return false;
             }
             public bool start_frame2()
@@ -837,17 +845,9 @@ namespace ConsoleApp1
                                   "|  ||  \\\\  //  ||      ||           ||     ||     ||           //    \\\\        \\\\       ||        ||======  |\n" +
                                   "|  ||   \\\\//   ||      ||           ||     ||     ||         ============     //\\\\      ||        ||\t    |\n" +
                                   "|  ||    ||    ||      ||=====      ||     ||     ||=====     ||      ||     //||\\\\     ||=====   ||\t    |");
-                Console.WriteLine("|___________________________________________________________________________________________________________|");
-                Console.WriteLine();
-                Console.WriteLine("\t\t\t\t\t\t  Играть\n" +
-                                  "\t\t\t\t\t\t> Выйти");
+                Console.WriteLine("|___________________________________________________________________________________________________________|\n");
+                Console.WriteLine("\t\t\t\t\t\t  Играть\n" + "\t\t\t\t\t\t-> Выйти");
                 return true;
-            }
-            public void end_frame()
-            {
-                Console.WriteLine(" ____________________________________________");
-                Console.WriteLine("|\t       Спасибо за игру!\t             |");
-                Console.WriteLine("|____________________________________________|");
             }
             public void game() //функция всей игры
             {  
@@ -880,7 +880,6 @@ namespace ConsoleApp1
                     if (key == ConsoleKey.Enter && exit == true)
                     {
                         Console.Clear();
-                        end_frame();
                         return;
                     }
                     if (key == ConsoleKey.Enter && exit == false)
@@ -916,7 +915,7 @@ namespace ConsoleApp1
                     step(players, plrsBySen, bank, ref mainPlrID,i);
                     steps--;
                     mainPlrID++;
-                    Console.ReadLine();
+                    confirm();
                     if (players.Count() <= 1)
                     {
                         winner(players, bank);
@@ -924,7 +923,7 @@ namespace ConsoleApp1
                     }
                 }
             }
-            static void Main(string[] args)
+            static void Main(string[] args) 
             {
                 All_game game = new All_game();
                 game.game();
